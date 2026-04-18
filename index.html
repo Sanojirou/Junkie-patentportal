@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>特許法フィジェット・タイムライン</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+<div class="post-form-container">
+  <div class="post-form">
+    <div class="icon">🎓</div> <div class="form-main">
+      <textarea id="post-input" placeholder="今日はどの条文を攻略する？" rows="1"></textarea>
+      <div class="form-actions">
+        <button id="submit-post" class="btn-primary">ポストする</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <h1>ホーム</h1>
+  <div class="tabs">
+    <div class="tab active" data-tab="home">おすすめ</div>
+    <div class="tab" data-tab="profile">プロフィール</div>
+  </div>
+</header>
+
+    <main id="timeline">
+      <div id="loading">条文を解析中... (初回のみ数秒かかります)</div>
+    </main>
+  </div>
+
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
