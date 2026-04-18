@@ -60,14 +60,19 @@ function renderTimeline() {
 
   actions.forEach(data => {
     // UI.createPostElement の第2引数をオブジェクトとして渡す
-    const postEl = UI.createPostElement(data, {
-      onQuote: (d) => {
-        quotingData = d;
-        showQuotePreview(d); // プレビュー表示関数を呼ぶ
+    const postEl = UI.createPostElement(item, {
+      onQuote: (data) => {
+        quotingData = data;
+        quotePreviewContent.innerText = data.text || data.articleText;
+        quotePreview.style.display = 'block';
+        postInput.placeholder = "引用してコメント...";
+        postInput.focus();
       },
-      onReply: (d) => {
-        replyingToData = d;
-        postInput.placeholder = `返信を書き込む...`;
+      onReply: (data) => {
+        replyingToData = data;
+        quotePreviewContent.innerText = `返信先: ${data.num ? '第' + data.num + '条' : 'ユーザー'}`;
+        quotePreview.style.display = 'block';
+        postInput.placeholder = "返信を書く...";
         postInput.focus();
       },
       onShowDetail: (source) => {

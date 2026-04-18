@@ -5,7 +5,6 @@
  * UIコンポーネント生成モジュール
  */
 export const UI = {
-  // 第2引数を { ... } で囲むのがポイント
   createPostElement(data, { onQuote, onReply, onShowDetail }) {
     const isQuote = data.type === 'quote';
     const isReply = data.type === 'reply';
@@ -15,7 +14,8 @@ export const UI = {
     post.className = 'post';
 
     // アカウント名の判定（データが無い時のために || でデフォルト値を設定）
-    const displayName = isUser ? 'あなた' : `特許法 第${data.num || data.articleNum || '?' }条`;
+    const articleLabel = data.num ? `特許法 第${data.num}条` : "特許法";
+    const displayName = isUser ? 'あなた' : articleLabel;
     const userId = isUser ? '@Learner' : '@Patent_Act_JP';
 
   let quoteHtml = '';
