@@ -194,22 +194,6 @@ header h1 {
   background-color: #080808;
 }
 
-
-/* 引用内の文字を少し小さくしてメリハリをつける */
-.article-text.mini {
-  font-size: 0.9rem;
-  color: var(--text-main);
-  margin-top: 4px;
-  display: -webkit-box;
-  -webkit-line-clamp: 3; /* 長すぎる場合は3行で切る */
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.quoted-card .user-meta {
-  margin-bottom: 4px;
-}
-
 .quoted-card .user-meta {
   margin-bottom: 4px;
 }

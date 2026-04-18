@@ -19,22 +19,31 @@ const cancelQuoteBtn = document.getElementById('cancel-quote');
  * 1. 初期化処理
  */
 async function init() {
+  const loading = document.getElementById('loading');
+  
   try {
-    // パスを law_data.xml に修正
+    // 修正：ファイル名を正確に指定
     const res = await fetch('./law_data.xml'); 
-    if (!res.ok) throw new Error(`HTTPエラー: ${res.status}`);
+    
+    if (!res.ok) {
+      throw new Error(`ファイルが見つかりません (Status: ${res.status})`);
+    }
     
     const xmlText = await res.text();
     const generator = LawParser.parseXmlGenerator(xmlText);
 
+    // 全条文をプールに格納
     for await (const article of generator) {
       articlePool.push(article);
     }
-    
-    document.getElementById('loading').style.display = 'none';
+
+    // 読み込み表示を消して描画
+    if (loading) loading.style.display = 'none';
     renderTimeline();
+
   } catch (e) {
-    console.error("初期化失敗:", e);
+    console.error("初期化エラー:", e);
+    if (loading) loading.textContent = "読み込みに失敗しました。コンソールを確認してください。";
   }
 }
 
