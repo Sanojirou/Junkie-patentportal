@@ -42,9 +42,12 @@ async function init() {
     if (loading) loading.style.display = 'none';
     renderTimeline();
 
-  } catch (e) {
-    console.error("初期化エラー:", e);
-    if (loading) loading.textContent = "読み込みに失敗しました。コンソールを確認してください。";
+} catch (error) {
+    console.error("読み込みエラー:", error);
+  } finally {
+    // 成功・失敗に関わらず、読み込み中表示を消す
+    if (loading) loading.style.display = 'none';
+    renderTimeline(); // 最後にタイムラインを描画
   }
 }
 
@@ -54,15 +57,22 @@ async function init() {
 function renderTimeline() {
   timeline.innerHTML = '';
   const actions = Store.getActions();
+
   actions.forEach(data => {
+    // UI.createPostElement の第2引数をオブジェクトとして渡す
     const postEl = UI.createPostElement(data, {
-      onQuote: (d) => { quotingData = d; /* プレビュー表示処理 */ },
-      onReply: (d) => { 
+      onQuote: (d) => {
+        quotingData = d;
+        showQuotePreview(d); // プレビュー表示関数を呼ぶ
+      },
+      onReply: (d) => {
         replyingToData = d;
-        postInput.placeholder = `@${d.id} への返信を書き込む...`;
+        postInput.placeholder = `返信を書き込む...`;
         postInput.focus();
       },
-      onShowDetail: (source) => UI.showDetailModal(source)
+      onShowDetail: (source) => {
+        // 必要ならモーダルを表示する処理
+      }
     });
     timeline.appendChild(postEl);
   });

@@ -5,11 +5,18 @@
  * UIコンポーネント生成モジュール
  */
 export const UI = {
-  createPostElement(data, onQuoteClick) {
+  // 第2引数を { ... } で囲むのがポイント
+  createPostElement(data, { onQuote, onReply, onShowDetail }) {
     const isQuote = data.type === 'quote';
-    const isUser = data.type === 'user' || isQuote;
+    const isReply = data.type === 'reply';
+    const isUser = data.type === 'user' || isQuote || isReply;
+    
     const post = document.createElement('div');
     post.className = 'post';
+
+    // アカウント名の判定（データが無い時のために || でデフォルト値を設定）
+    const displayName = isUser ? 'あなた' : `特許法 第${data.num || data.articleNum || '?' }条`;
+    const userId = isUser ? '@Learner' : '@Patent_Act_JP';
 
   let quoteHtml = '';
       if (isQuote && data.quotedFrom) {
@@ -24,25 +31,28 @@ export const UI = {
         `;
     }
 
-    const contentText = isQuote ? data.comment : (data.text || data.articleText);
+    const contentText = isQuote ? data.comment : (data.text || data.articleText || "");
     const displayName = isUser ? 'あなた' : `特許法 ${data.num}`;
     const userId = isUser ? '@Learner' : '@Patent_Act_JP';
 
 // アクションボタン（返信・引用）の追加
     post.innerHTML = `
-      <div class="post-body" style="display: flex; gap: 12px;">
-        <div class="icon">${isUser ? '🎓' : '⚖️'}</div>
-        <div class="post-content">
-          <div class="user-meta">...</div>
-          <div class="article-text">${contentText.replace(/\n/g, '<br>')}</div>
-          ${quoteHtml}
-          <div class="post-actions" style="margin-top: 12px; display: flex; gap: 20px;">
-            <button class="action-btn reply-btn" title="返信">💬</button>
-            <button class="action-btn quote-btn" title="引用">🔄</button>
+          <div class="post-body" style="display: flex; gap: 12px;">
+            <div class="icon">${isUser ? '🎓' : '⚖️'}</div>
+            <div class="post-content">
+              <div class="user-meta">
+                <span class="user-name">${displayName}</span>
+                <span class="user-id">${userId}</span>
+                <span class="timestamp">${data.timestamp || ''}</span>
+              </div>
+              <div class="article-text">${contentText.replace(/\n/g, '<br>')}</div>
+              <div class="post-actions" style="margin-top: 12px; display: flex; gap: 20px;">
+                <button class="action-btn reply-btn">💬 返信</button>
+                <button class="action-btn quote-btn">🔄 引用</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    `;
+        `;
 
     // イベントリスナーの紐付け
     post.querySelector('.reply-btn').onclick = () => onReply(data);
