@@ -180,3 +180,55 @@ header h1 {
   font-weight: bold;
   cursor: pointer;
 }
+
+/* 引用カード（枠囲み） */
+.quoted-card {
+  margin-top: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 12px;
+  background-color: #000;
+  transition: background-color 0.2s;
+}
+
+.quoted-card:hover {
+  background-color: #080808;
+}
+
+.quoted-card .user-meta {
+  margin-bottom: 4px;
+}
+
+.quoted-card .user-name {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.quoted-card .user-id {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.article-text.mini {
+  font-size: 14px;
+  color: var(--text-main);
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* 長すぎる場合は3行で省略 */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 引用ボタンの簡易スタイル */
+.quote-btn {
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.quote-btn:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}

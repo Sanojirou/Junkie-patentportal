@@ -18,27 +18,30 @@ async function init() {
   const loading = document.getElementById('loading');
   
   try {
-    // 1. XMLデータの取得と解析
-    const res = await fetch('./law_data.xml');
-    if (!res.ok) throw new Error("XMLファイルの取得に失敗しました");
+    // 1. ファイル名が law_data.xml.txt になっている場合はこちらに合わせる
+    const res = await fetch('./law_data.xml.txt'); 
+    
+    if (!res.ok) {
+      throw new Error(`HTTPエラー! ステータス: ${res.status}。ファイルが見つからないか、パスが間違っています。`);
+    }
     
     const xmlText = await res.text();
+    
+    // デバッグ用: 取得したテキストの冒頭を表示
+    console.log("取得データ冒頭:", xmlText.substring(0, 100));
+
     const generator = LawParser.parseXmlGenerator(xmlText);
 
-    // ジェネレーターを回してプールに蓄積
     for await (const article of generator) {
       articlePool.push(article);
-      
-      // 最初の数件が溜まったら、一旦表示して「動いてる感」を出す
       if (articlePool.length === 10) {
         loading.style.display = 'none';
         renderTimeline();
       }
     }
-    console.log("全条文の読み込み完了:", articlePool.length);
   } catch (e) {
-    console.error(e);
-    if (loading) loading.innerText = "エラーが発生しました: " + e.message;
+    console.error("詳細エラー:", e);
+    loading.innerText = "Error: " + e.message;
   }
 }
 
@@ -89,9 +92,10 @@ function renderTimeline() {
  */
 function setQuote(data) {
   quotingData = data;
-  postInput.placeholder = `特許法 ${data.num} を引用中...`;
+  // 表示名の判定
+  const targetName = data.num ? `特許法 ${data.num}` : '自分の投稿';
+  postInput.placeholder = `${targetName} を引用中...`;
   postInput.focus();
-  // スムーズに上部へスクロール
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
