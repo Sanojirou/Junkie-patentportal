@@ -5,7 +5,8 @@ import { LawParser } from './lawParser.js';
 // --- アプリケーションの状態管理 ---
 let articlePool = [];      
 let currentTab = 'home';   
-let quotingData = null;    
+let quotingData = null;
+let replyingToData = null;
 
 // --- 要素の取得 ---
 const timeline = document.getElementById('timeline');
@@ -52,20 +53,17 @@ async function init() {
  */
 function renderTimeline() {
   timeline.innerHTML = '';
-  const myActions = Store.getActions();
-
-  let displayItems = [];
-  if (currentTab === 'home') {
-    const randomArticles = [...articlePool]
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 10);
-    displayItems = [...myActions, ...randomArticles];
-  } else {
-    displayItems = myActions;
-  }
-
-  displayItems.forEach(item => {
-    const postEl = UI.createPostElement(item, (data) => setQuote(data));
+  const actions = Store.getActions();
+  actions.forEach(data => {
+    const postEl = UI.createPostElement(data, {
+      onQuote: (d) => { quotingData = d; /* プレビュー表示処理 */ },
+      onReply: (d) => { 
+        replyingToData = d;
+        postInput.placeholder = `@${d.id} への返信を書き込む...`;
+        postInput.focus();
+      },
+      onShowDetail: (source) => UI.showDetailModal(source)
+    });
     timeline.appendChild(postEl);
   });
 }
@@ -93,9 +91,10 @@ function setQuote(data) {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+
 // --- イベントリスナーの登録 ---
 
-// 投稿ボタン
+// 送信ボタンのロジック
 submitBtn.addEventListener('click', () => {
   const text = postInput.value.trim();
   if (!text) return;
@@ -103,15 +102,27 @@ submitBtn.addEventListener('click', () => {
   if (quotingData) {
     Store.saveQuote(text, quotingData);
     quotingData = null;
-    quotePreview.style.display = 'none';
+  } else if (replyingToData) {
+    Store.saveReply(text, replyingToData.id); // リプライ保存
+    replyingToData = null;
   } else {
     Store.savePost(text);
   }
 
+// UIリセット
   postInput.value = '';
-  postInput.style.height = 'auto'; // 高さを戻す
+  quotePreview.style.display = 'none';
   postInput.placeholder = "今日はどの条文を攻略する？";
   renderTimeline();
+});
+
+// main.js に追加
+postInput.addEventListener('keydown', (e) => {
+  // Ctrl + Enter (Macの場合は Cmd + Enter も考慮)
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault(); // 改行を防ぐ
+    submitBtn.click();  // すでにあるクリックイベントをそのまま発火させる
+  }
 });
 
 // テキストエリアの自動伸縮

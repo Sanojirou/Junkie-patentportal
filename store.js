@@ -39,5 +39,20 @@ export const Store = {
     actions.unshift(newQuote);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(actions));
     return newQuote;
-  }
+  },
+
+    // store.js に追加・修正案
+    saveReply(text, parentId) {
+      const actions = this.getActions();
+      const newReply = {
+        id: 'reply_' + Date.now(),
+        type: 'reply',
+        parentId: parentId, // 親投稿のIDを紐付け
+        text: text,
+        timestamp: new Date().toLocaleString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+      };
+      actions.unshift(newReply);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(actions));
+      return newReply;
+    }
 };
