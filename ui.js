@@ -31,9 +31,6 @@ export const UI = {
         `;
     }
 
-    const contentText = isQuote ? data.comment : (data.text || data.articleText || "");
-    const displayName = isUser ? 'あなた' : `特許法 ${data.num}`;
-    const userId = isUser ? '@Learner' : '@Patent_Act_JP';
 
 // アクションボタン（返信・引用）の追加
     post.innerHTML = `
