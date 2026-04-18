@@ -24,15 +24,17 @@ export const Store = {
 
   saveQuote(comment, originalData) {
     const actions = this.getActions();
+    // 引用対象がすでに「引用」だった場合、その中の元データを引き継ぐ（またはフラットにする）
+    const source = originalData.type === 'quote' ? originalData.quotedFrom : originalData;
+
     const newQuote = {
       id: 'quote_' + Date.now(),
       type: 'quote',
       comment: comment,
       quotedFrom: {
-        num: originalData.num || originalData.articleNum,
-        text: originalData.text || originalData.articleText
-      },
-      timestamp: new Date().toLocaleString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+        num: source.num || source.articleNum,
+        text: source.text || source.articleText
+        },
     };
     actions.unshift(newQuote);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(actions));

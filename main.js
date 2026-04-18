@@ -7,9 +7,15 @@ let articlePool = [];      // 解析済みの全条文
 let currentTab = 'home';   // 現在のタブ ('home' or 'profile')
 let quotingData = null;    // 現在引用しようとしている条文データ
 
+// --- main.js の冒頭付近 ---
 const timeline = document.getElementById('timeline');
 const postInput = document.getElementById('post-input');
 const submitBtn = document.getElementById('submit-post');
+
+// 新しく追加する要素
+const quotePreview = document.getElementById('quote-preview');
+const quotePreviewContent = document.getElementById('quote-preview-content');
+const cancelQuoteBtn = document.getElementById('cancel-quote');
 
 /**
  * 初期化処理
@@ -18,8 +24,7 @@ async function init() {
   const loading = document.getElementById('loading');
   
   try {
-    // 1. ファイル名が law_data.xml.txt になっている場合はこちらに合わせる
-    const res = await fetch('./law_data.xml.txt'); 
+    const res = await fetch('./law_data.xml'); 
     
     if (!res.ok) {
       throw new Error(`HTTPエラー! ステータス: ${res.status}。ファイルが見つからないか、パスが間違っています。`);
@@ -106,18 +111,18 @@ submitBtn.addEventListener('click', () => {
   const text = postInput.value.trim();
   if (!text) return;
 
-  if (quotingData) {
-    // 引用投稿
-    Store.saveQuote(text, quotingData);
-    quotingData = null;
-    postInput.placeholder = "今日はどの条文を攻略する？";
-  } else {
-    // 通常投稿
-    Store.savePost(text);
-  }
+    if (quotingData) {
+      Store.saveQuote(text, quotingData);
+      quotingData = null;
+      quotePreview.style.display = 'none'; // プレビューを隠す
+    } else {
+      Store.savePost(text);
+    }
 
   postInput.value = '';
-  renderTimeline(); // 再描画
+  postInput.style.height = 'auto'; // 高さをリセット
+  postInput.placeholder = "今日はどの条文を攻略する？";
+  renderTimeline();
 });
 
 /**
@@ -135,3 +140,50 @@ document.querySelectorAll('.tab').forEach(tab => {
 
 // 実行
 init();
+
+/**
+ * テキストエリアの自動伸縮ロジック
+ */
+postInput.addEventListener('input', () => {
+  // 一旦高さをリセットして計算し直すことで、文字を消した時も縮むようになります
+  postInput.style.height = 'auto';
+  postInput.style.height = postInput.scrollHeight + 'px';
+});
+
+/**
+ * 引用解除（キャンセル）処理
+ */
+cancelQuoteBtn.addEventListener('click', () => {
+  quotingData = null;
+  quotePreview.style.display = 'none';
+  postInput.placeholder = "今日はどの条文を攻略する？";
+  
+  // 高さを元に戻す
+  postInput.style.height = 'auto';
+});
+
+/**
+ * 引用状態のセット（アップデート版）
+ */
+function setQuote(data) {
+  quotingData = data;
+  const targetName = data.num ? `特許法 第${data.num}条` : 'ユーザーの投稿';
+  const targetText = data.text || data.articleText || "";
+
+  // プレビューエリアを表示し、中身を書き換える
+  quotePreview.style.display = 'block';
+  quotePreviewContent.innerHTML = `
+    <div class="quoted-card" style="margin:0; padding:10px; font-size:0.85rem; border-color: var(--accent);">
+      <strong style="color:var(--accent);">${targetName}</strong>
+      <div style="color:var(--text-sub); overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;">
+        ${targetText}
+      </div>
+    </div>
+  `;
+  
+  postInput.placeholder = "コメントを追加...";
+  postInput.focus();
+  
+  // 投稿直後に引用がセットされた場合、一番上までスクロールさせる
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}

@@ -149,16 +149,15 @@ header h1 {
 /* テキストエリアの洗練 */
 #post-input {
   width: 100%;
-  background: transparent; /* 背景を透明にして親の黒に合わせる */
+  background: transparent;
   border: none;
+  color: var(--text-main);
   font-size: 1.2rem;
-  font-family: inherit;
-  resize: none;
+  resize: none; /* 手動のリサイズを禁止 */
   outline: none;
-  padding: 8px 0;
-  color: var(--text-main); /* 文字色を白に */
-  overflow: hidden; /* スクロールバーを消す */
-  min-height: 50px;
+  overflow: hidden; /* スクロールバーを隠す */
+  min-height: 1.5em;
+  line-height: 1.5;
 }
 
 #post-input:focus {
@@ -193,6 +192,22 @@ header h1 {
 
 .quoted-card:hover {
   background-color: #080808;
+}
+
+
+/* 引用内の文字を少し小さくしてメリハリをつける */
+.article-text.mini {
+  font-size: 0.9rem;
+  color: var(--text-main);
+  margin-top: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* 長すぎる場合は3行で切る */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.quoted-card .user-meta {
+  margin-bottom: 4px;
 }
 
 .quoted-card .user-meta {

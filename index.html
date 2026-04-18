@@ -10,8 +10,15 @@
   <div id="app">
 <div class="post-form-container">
   <div class="post-form">
-    <div class="icon">🎓</div> <div class="form-main">
+    <div class="icon">🎓</div>
+    <div class="form-main">
+      <div id="quote-preview" style="display: none; position: relative; margin-bottom: 8px;">
+        <div id="quote-preview-content"></div>
+        <button id="cancel-quote" style="position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer;">✕</button>
+      </div>
+      
       <textarea id="post-input" placeholder="今日はどの条文を攻略する？" rows="1"></textarea>
+      
       <div class="form-actions">
         <button id="submit-post" class="btn-primary">ポストする</button>
       </div>
