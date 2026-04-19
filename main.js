@@ -55,31 +55,27 @@ async function init() {
  * 2. タイムラインの描画
  */
 function renderTimeline() {
-  timeline.innerHTML = '';
   const actions = Store.getActions();
-
-  actions.forEach(data => {
-    // UI.createPostElement の第2引数をオブジェクトとして渡す
-    const postEl = UI.createPostElement(item, {
-      onQuote: (data) => {
-        quotingData = data;
-        quotePreviewContent.innerText = data.text || data.articleText;
-        quotePreview.style.display = 'block';
-        postInput.placeholder = "引用してコメント...";
-        postInput.focus();
-      },
-      onReply: (data) => {
-        replyingToData = data;
-        quotePreviewContent.innerText = `返信先: ${data.num ? '第' + data.num + '条' : 'ユーザー'}`;
-        quotePreview.style.display = 'block';
-        postInput.placeholder = "返信を書く...";
-        postInput.focus();
-      },
-      onShowDetail: (source) => {
-        // 必要ならモーダルを表示する処理
-      }
-    });
-    timeline.appendChild(postEl);
+  
+  // UI.js の renderTimeline メソッドを使う形式に統一
+  UI.renderTimeline(timeline, actions, {
+    onQuote: (data) => {
+      quotingData = data;
+      replyingToData = null; // リプライ状態は解除
+      quotePreviewContent.innerText = `引用: ${data.num || 'ポスト'}`;
+      quotePreview.style.display = 'block';
+      postInput.placeholder = "引用してコメント...";
+      postInput.focus();
+    },
+    onReply: (data) => {
+      replyingToData = data;
+      quotingData = null; // 引用状態は解除
+      quotePreviewContent.innerText = `返信先: ${data.num ? '第' + data.num + '条' : 'ユーザー'}`;
+      quotePreview.style.display = 'block';
+      postInput.placeholder = "返信を書く...";
+      postInput.focus();
+    },
+    onShowDetail: (source) => UI.showDetailModal(source)
   });
 }
 
@@ -110,33 +106,35 @@ function setQuote(data) {
 // --- イベントリスナーの登録 ---
 
 // 送信ボタンのロジック
-submitBtn.addEventListener('click', () => {
+function handleSend() {
   const text = postInput.value.trim();
   if (!text) return;
 
   if (quotingData) {
     Store.saveQuote(text, quotingData);
-    quotingData = null;
   } else if (replyingToData) {
-    Store.saveReply(text, replyingToData.id); // リプライ保存
-    replyingToData = null;
+    Store.saveReply(text, replyingToData.id);
   } else {
     Store.savePost(text);
   }
 
-// UIリセット
+  // 状態リセット
+  quotingData = null;
+  replyingToData = null;
   postInput.value = '';
+  postInput.style.height = 'auto';
   quotePreview.style.display = 'none';
   postInput.placeholder = "今日はどの条文を攻略する？";
   renderTimeline();
-});
+}
 
-// main.js に追加
+submitBtn.addEventListener('click', handleSend);
+
+// Ctrl + Enter 実装
 postInput.addEventListener('keydown', (e) => {
-  // Ctrl + Enter (Macの場合は Cmd + Enter も考慮)
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault(); // 改行を防ぐ
-    submitBtn.click();  // すでにあるクリックイベントをそのまま発火させる
+    e.preventDefault();
+    handleSend();
   }
 });
 
