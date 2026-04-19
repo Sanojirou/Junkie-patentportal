@@ -3,12 +3,12 @@ import { UI } from './ui.js';
 import { LawParser } from './lawParser.js';
 
 // --- アプリケーションの状態管理 ---
-let articlePool = [];      // 読み込んだ全条文を保管する場所
-let currentTab = 'home';   // 現在「ホーム」か「プロフィール」か
-let quotingData = null;    // 引用しようとしているデータ
-let replyingToData = null; // 返信しようとしているデータ
+let articlePool = [];      
+let currentTab = 'home';   
+let quotingData = null;
+let replyingToData = null;
 
-// --- 画面要素の取得 ---
+// --- 要素の取得 ---
 const timeline = document.getElementById('timeline');
 const postInput = document.getElementById('post-input');
 const submitBtn = document.getElementById('submit-post');
@@ -18,112 +18,93 @@ const cancelQuoteBtn = document.getElementById('cancel-quote');
 
 /**
  * 1. 初期化処理
- * 起動時に一度だけ実行され、XMLファイルを読み込みます。
  */
 async function init() {
   const loading = document.getElementById('loading');
   
   try {
-    // law_data.xml を読みに行く
     const res = await fetch('./law_data.xml'); 
     
     if (!res.ok) {
-      throw new Error(`ファイルが見てかりません (Status: ${res.status})`);
+      throw new Error(`ファイルが見つかりません (Status: ${res.status})`);
     }
     
     const xmlText = await res.text();
     const generator = LawParser.parseXmlGenerator(xmlText);
 
-    // 解析された条文を一つずつ articlePool に追加していく
+    // 全条文をプールに格納
     for await (const article of generator) {
       articlePool.push(article);
     }
 
-    // 読み込み中表示を消す
-    if (loading) loading.style.display = 'none';
-
-    // 最初に一度画面を描画する
-    renderTimeline();
-
   } catch (error) {
-    console.error("初期化エラー:", error);
-    if (loading) loading.innerText = "データの読み込みに失敗しました。";
+    console.error("読み込みエラー:", error);
+  } finally {
+    // 成功・失敗に関わらず、読み込み中表示を消す
+    if (loading) loading.style.display = 'none';
+    renderTimeline(); // 最後にタイムラインを描画
   }
 }
 
 /**
- * 2. タイムラインの描画処理
- * 現在のタブに合わせて表示する内容を作り、画面を更新します。
+ * 2. タイムラインの描画
  */
 function renderTimeline() {
-  if (!timeline) return;
-
-  // 自分の投稿データを取得
+  // 記憶係(Store)から自分の過去の投稿データを取得
   const myPosts = Store.getActions();
   let displayData = [];
 
+  // 現在のタブが「ホーム」か「プロフィール」かで処理を分ける
   if (currentTab === 'home') {
-    // 【ホームタブの場合】
-    // 自分の投稿と条文を混ぜる（Twitterのおすすめフィード風）
-    // ここでは単純に「自分の投稿」の間に「条文」を挟み込むロジックにします
-    
-    let combined = [];
-    // 自分の投稿をベースにする
+    // 【ホームタブ】自分の投稿と、条文データを混ぜる
     myPosts.forEach((post, index) => {
-      combined.push(post);
-      // 2件ごとに条文を1つ差し込む（articlePoolから順番に取り出す例）
-      if ((index + 1) % 2 === 0 && articlePool[index / 2]) {
-        combined.push(articlePool[index / 2]);
+      // まず自分の投稿を入れる
+      displayData.push(post);
+      
+      // 自分の投稿2件につき、条文を1つ差し込む
+      const articleIndex = Math.floor(index / 2);
+      if ((index + 1) % 2 === 0 && articlePool[articleIndex]) {
+        displayData.push(articlePool[articleIndex]);
       }
     });
 
-    // まだ投稿が少ない場合は、条文を多めに表示する
-    if (combined.length < 10) {
-      const additionalArticles = articlePool.slice(combined.length, 20);
-      combined = [...combined, ...additionalArticles];
+    // まだ自分の投稿が少なくて画面が寂しい場合は、条文を多めに追加して画面を埋める
+    if (displayData.length < 10) {
+      const extraArticles = articlePool.slice(displayData.length, 20);
+      displayData = displayData.concat(extraArticles);
     }
-    
-    displayData = combined;
   } else {
-    // 【プロフィールタブの場合】
-    // 自分が投稿したもの（メモ、引用、返信）だけを表示する
+    // 【プロフィールタブ】条文は混ぜず、自分の投稿だけを表示する
     displayData = myPosts;
   }
 
-  // UIモジュールにデータを渡して、画面を作ってもらう
+  // 用意したデータを UI.js に渡して画面を作ってもらう
   UI.renderTimeline(timeline, displayData, {
-    onQuote: (data) => handlePrepareQuote(data),
-    onReply: (data) => handlePrepareReply(data),
-    onShowDetail: (data) => UI.showDetailModal(data)
+    onQuote: (data) => {
+      quotingData = data;
+      replyingToData = null; // リプライ状態は解除
+      quotePreviewContent.innerText = `引用: ${data.num ? '第' + data.num + '条' : 'ポスト'}`;
+      quotePreview.style.display = 'block';
+      postInput.placeholder = "引用してコメント...";
+      postInput.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onReply: (data) => {
+      replyingToData = data;
+      quotingData = null; // 引用状態は解除
+      quotePreviewContent.innerText = `返信先: ${data.num ? '第' + data.num + '条' : 'ユーザー'}`;
+      quotePreview.style.display = 'block';
+      postInput.placeholder = "返信を書く...";
+      postInput.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+    onShowDetail: (source) => UI.showDetailModal(source)
   });
 }
 
-/**
- * 3. 投稿・アクション関連の関数
- */
+// --- イベントリスナーの登録 ---
 
-// 引用の準備
-function handlePrepareQuote(data) {
-  quotingData = data;
-  replyingToData = null;
-  
-  quotePreviewContent.innerText = data.text || data.articleText || "";
-  quotePreview.style.display = 'block';
-  postInput.placeholder = "引用してコメント...";
-  postInput.focus();
-}
-
-// 返信の準備
-function handlePrepareReply(data) {
-  replyingToData = data;
-  quotingData = null;
-  
-  const targetName = data.num ? `第${data.num}条` : "投稿";
-  postInput.placeholder = `${targetName} への返信をポスト...`;
-  postInput.focus();
-}
-
-// 投稿ボタンが押された時の処理
+// 送信ボタンのロジック
 function handleSend() {
   const text = postInput.value.trim();
   if (!text) return;
@@ -136,26 +117,19 @@ function handleSend() {
     Store.savePost(text);
   }
 
-  // 投稿が終わったら入力欄をリセット
+  // 状態リセット
   quotingData = null;
   replyingToData = null;
   postInput.value = '';
   postInput.style.height = 'auto';
   quotePreview.style.display = 'none';
   postInput.placeholder = "今日はどの条文を攻略する？";
-  
-  // 画面を最新の状態に更新
   renderTimeline();
 }
 
-/**
- * 4. イベントリスナー（ボタン操作などの登録）
- */
-
-// 送信ボタン
 submitBtn.addEventListener('click', handleSend);
 
-// Ctrl + Enter で送信
+// Ctrl + Enter 実装
 postInput.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
     e.preventDefault();
@@ -163,31 +137,29 @@ postInput.addEventListener('keydown', (e) => {
   }
 });
 
-// 入力に合わせてテキストエリアの高さを変える
+// テキストエリアの自動伸縮
 postInput.addEventListener('input', () => {
   postInput.style.height = 'auto';
   postInput.style.height = postInput.scrollHeight + 'px';
 });
 
-// 引用キャンセル
+// 引用キャンセルボタン
 cancelQuoteBtn.addEventListener('click', () => {
   quotingData = null;
   quotePreview.style.display = 'none';
   postInput.placeholder = "今日はどの条文を攻略する？";
+  postInput.style.height = 'auto';
 });
 
-// タブ切り替え（ホーム / プロフィール）
+// タブ切り替え
 document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    // 見た目の切り替え
-    document.querySelector('.tab.active').classList.remove('active');
-    tab.classList.add('active');
-
-    // 状態の更新と再描画
-    currentTab = tab.dataset.tab; // index.htmlの data-tab="home" などを取得
+  tab.addEventListener('click', (e) => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    currentTab = e.target.dataset.tab;
     renderTimeline();
   });
 });
 
-// アプリの開始
+// 最後に実行！
 init();
