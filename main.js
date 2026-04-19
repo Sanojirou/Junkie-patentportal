@@ -50,6 +50,8 @@ async function init() {
  * 2. タイムラインの描画
  */
 function renderTimeline() {
+  if (!timeline) return;
+
   // 記憶係(Store)から自分の過去の投稿データを取得
   const myPosts = Store.getActions();
   let displayData = [];
@@ -58,7 +60,7 @@ function renderTimeline() {
   if (currentTab === 'home') {
     // 【ホームタブ】自分の投稿と、条文データを混ぜる
     myPosts.forEach((post, index) => {
-      // まず自分の投稿を入れる
+      // 取り出したデータを「post」という名前で扱い、画面用リストに追加
       displayData.push(post);
       
       // 自分の投稿2件につき、条文を1つ差し込む
@@ -82,7 +84,7 @@ function renderTimeline() {
   UI.renderTimeline(timeline, displayData, {
     onQuote: (data) => {
       quotingData = data;
-      replyingToData = null; // リプライ状態は解除
+      replyingToData = null; 
       quotePreviewContent.innerText = `引用: ${data.num ? '第' + data.num + '条' : 'ポスト'}`;
       quotePreview.style.display = 'block';
       postInput.placeholder = "引用してコメント...";
@@ -91,7 +93,7 @@ function renderTimeline() {
     },
     onReply: (data) => {
       replyingToData = data;
-      quotingData = null; // 引用状態は解除
+      quotingData = null; 
       quotePreviewContent.innerText = `返信先: ${data.num ? '第' + data.num + '条' : 'ユーザー'}`;
       quotePreview.style.display = 'block';
       postInput.placeholder = "返信を書く...";
